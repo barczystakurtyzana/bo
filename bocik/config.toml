@@ -1,0 +1,58 @@
+# ==================================================
+#    ULTRA-LIGHT SOLANA SNIPER - PLIK KONFIGURACYJNY
+# ==================================================
+# Zmień nazwę tego pliku na "config.toml", aby go użyć.
+
+# -- Ustawienia Podstawowe --
+
+# Pełna ścieżka do Twojego pliku keypair Solana (np. /home/user/.config/solana/id.json)
+# WYMAGANE, aby bot mógł podpisywać transakcje.
+keypair_path = "/path/to/your/solana-keypair.json"
+
+# -- Ustawienia Sieciowe --
+
+# Główny endpoint RPC do pobierania danych i wysyłania transakcji.
+# Użyj niezawodnego, prywatnego dostawcy RPC dla najlepszej wydajności.
+# Ta wartość jest również używana jako domyślna w `rpc_endpoints`.
+rpc_url = "https://api.mainnet-beta.solana.com"
+
+# Endpoint WebSocket (WSS) dla sniffera.
+# Powinien to być dedykowany endpoint WSS od Twojego dostawcy.
+wss_rpc_url = "wss://api.mainnet-beta.solana.com"
+
+# Lista endpointów RPC używanych przez RpcManager do rozsyłania transakcji.
+# Podaj kilka endpointów od różnych dostawców dla maksymalnej niezawodności.
+rpc_endpoints = [
+    "https://api.mainnet-beta.solana.com",
+    "https://api.helius.xyz/v0/rpc?api-key=YOUR_API_KEY",
+]
+
+# -- Ustawienia Silnika Quantum Race --
+
+# Liczba kont durable nonce do utworzenia i zarządzania.
+# Więcej nonce'ów pozwala na więcej równoległych strumieni transakcji. (Zalecane: 3-8)
+nonce_count = 5
+
+# Liczba najlepszych RPC, do których wysyłana jest każda transakcja w ramach wyścigu.
+# Wyższa wartość zwiększa redundancję, ale także koszt. (Zalecane: 2-3)
+rpcs_per_nonce = 3
+
+# -- Parametry Handlowe --
+
+# Ilość SOL do użycia przy każdym zakupie.
+# Wartość jest w SOL (np. 0.1 oznacza 0.1 SOL).
+buy_sol_amount = 0.05
+
+# Opłata priorytetowa w mikro-lamportach dodawana do każdej transakcji.
+# Wyższe opłaty zwiększają szansę na szybkie włączenie do bloku.
+# 1_000_000 mikro-lamportów = 0.001 SOL
+priority_fee_microlamports = 500_000
+
+# -- Wagi Scoringu dla RpcManager (Zaawansowane) --
+# Te wartości kontrolują, jak RpcManager ocenia i rankinguje endpointy.
+# Zmieniaj tylko, jeśli rozumiesz algorytm scoringu.
+[scoring_weights]
+latency_weight = 2.0
+success_rate_weight = 2.5
+geo_weight = 1.5
+stake_weight = 1.0

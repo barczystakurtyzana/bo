@@ -1,0 +1,57 @@
+[package]
+name = "solana-sniper-bot"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+# This feature flag enables the pump.fun SDK integration in tx_builder.rs
+# Building without this feature will result in a lighter binary that uses a placeholder.
+pumpfun = ["dep:pumpfun"]
+
+[dependencies]
+# Core Async Runtime & Utilities
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
+futures = "0.3"
+
+# Solana Ecosystem
+solana-client = "2.3"
+solana-sdk = "2.3"
+spl-token = "6.0"
+spl-associated-token-account = "7.0.0"
+
+# DEX SDKs (Optional)
+# The pumpfun SDK is included as an optional dependency, enabled by the 'pumpfun' feature.
+pumpfun = { version = "4.4.1", features = ["create-ata", "versioned-tx"], optional = true }
+
+# Configuration & Serialization
+toml = "0.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Error Handling
+anyhow = "1"
+thiserror = "1"
+
+# Logging and Observability
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+log = "0.4"
+
+# High-performance Concurrency
+# parking_lot is used in the core engine for high-speed, non-async locking.
+parking_lot = "0.12"
+
+# User Interface
+eframe = "0.27"
+
+# General Utilities
+regex = "1"
+bs58 = "0.5"
+base64 = "0.22"
+
+[dev-dependencies]
+# Dependencies for running tests
+tempfile = "3"
+
