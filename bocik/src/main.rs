@@ -40,7 +40,7 @@ async fn main() -> anyhow::Result<()> {
     info!("🚀 Initializing Solana Sniper Bot...");
 
     // 2. Load configuration and initialize shared state.
-    let config = Arc::new(RwLock::new(Config::load()?));
+    let config = Arc::new(RwLock::new(Config::load()));
     let app_state = Arc::new(RwLock::new(AppState {
         mode: Mode::Sniffing,
         held_token: None,
@@ -54,7 +54,7 @@ async fn main() -> anyhow::Result<()> {
 
     // 4. Initialize core execution components.
     info!("Initializing core execution engine...");
-    let wallet_manager = Arc::new(wallet::WalletManager::from_config(&config.read().await)?);
+    let wallet_manager = Arc::new(wallet::WalletManager::from_config(&*config.read().await)?);
     let rpc_manager = Arc::new(RpcManager::new(config.clone()));
     let nonce_manager = Arc::new(NonceManager::new(config.read().await.nonce_count)?);
     
@@ -90,7 +90,6 @@ async fn main() -> anyhow::Result<()> {
     // 6. Launch the GUI (this is a blocking call).
     info!("Launching User Interface...");
     ui::launch_gui(
-        "Solana Sniper Bot",
         app_state.clone(),
         ui_event_tx,
     )?;

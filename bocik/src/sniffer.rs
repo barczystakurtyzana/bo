@@ -89,12 +89,16 @@ async fn run_wss_listener(
                 while let Some(log_info) = stream.next().await {
                     if let Some(candidate) = parse_pump_fun_logs(&log_info.value.logs) {
                         // Deduplicate candidates
-                        let mut seen = SEEN_MINTS.lock().unwrap();
-                        if seen.1.elapsed() > DEDUPLICATION_TTL {
-                            seen.0.clear();
-                            seen.1 = Instant::now();
-                        }
-                        if seen.0.insert(candidate.mint.to_string()) {
+                        let should_send = {
+                            let mut seen = SEEN_MINTS.lock().unwrap();
+                            if seen.1.elapsed() > DEDUPLICATION_TTL {
+                                seen.0.clear();
+                                seen.1 = Instant::now();
+                            }
+                            seen.0.insert(candidate.mint.to_string())
+                        };
+                        
+                        if should_send {
                             if let Err(e) = candidate_tx.send(candidate).await {
                                 error!("Failed to send candidate to engine, channel closed: {}", e);
                                 unsub().await;
@@ -141,8 +145,8 @@ fn parse_pump_fun_logs(logs: &[String]) -> Option<SnifferCandidate> {
         let creator = keys[3];
         debug!("Found new pump.fun mint: {}, Creator: {}", mint, creator);
         Some(SnifferCandidate {
-            mint,
-            creator,
+            mint: mint.to_string(),
+            creator: creator.to_string(),
             program_id: PUMP_FUN_PROGRAM_ID.to_string(),
         })
     } else {

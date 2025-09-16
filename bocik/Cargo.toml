@@ -14,12 +14,14 @@ pumpfun = ["dep:pumpfun"]
 # Core Async Runtime & Utilities
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
 futures = "0.3"
+futures-util = "0.3"
 
 # Solana Ecosystem
 solana-client = "2.3"
 solana-sdk = "2.3"
 spl-token = "6.0"
 spl-associated-token-account = "7.0.0"
+spl-memo = "6.0"
 
 # DEX SDKs (Optional)
 # The pumpfun SDK is included as an optional dependency, enabled by the 'pumpfun' feature.
@@ -50,6 +52,9 @@ eframe = "0.27"
 regex = "1"
 bs58 = "0.5"
 base64 = "0.22"
+lazy_static = "1.4"
+fastrand = "2.0"
+bincode = "1.3"
 
 [dev-dependencies]
 # Dependencies for running tests

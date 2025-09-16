@@ -64,21 +64,21 @@ impl SniperApp {
                     });
                     ui.label("Awaiting new pump.fun tokens...");
                 }
-                Mode::Holding(mint) => {
+                Mode::Holding => {
                     ui.horizontal(|ui| {
                         ui.label("Mode:");
                         ui.label(RichText::new("HOLDING").color(egui::Color32::YELLOW).strong());
                     });
                     ui.add_space(10.0);
-                    ui.label("Mint:");
-                    let mint_label = ui.add(egui::Label::new(mint.to_string()).sense(Sense::click()));
-                    if mint_label.clicked() {
-                        ui.output_mut(|o| o.copied_text = mint.to_string());
-                    }
-                    mint_label.on_hover_text("Click to copy");
-
+                    
                     if let Some(token) = &state.held_token {
-                         ui.label(format!("Amount: {}", token.amount)); // Simple amount display
+                        ui.label("Mint:");
+                        let mint_label = ui.add(egui::Label::new(token.mint.to_string()).sense(Sense::click()));
+                        if mint_label.clicked() {
+                            ui.output_mut(|o| o.copied_text = token.mint.to_string());
+                        }
+                        mint_label.on_hover_text("Click to copy");
+                        ui.label(format!("Amount: {}", token.amount)); // Simple amount display
                     }
                 }
             }
@@ -87,7 +87,7 @@ impl SniperApp {
         ui.add_space(15.0);
 
         // --- Action Panel (only visible when holding a token) ---
-        if let Mode::Holding(_) = state.mode {
+        if let Mode::Holding = state.mode {
             self.draw_sell_controls(ui);
         }
     }
@@ -150,7 +150,7 @@ pub fn launch_gui(
     ui_event_tx: mpsc::Sender<GuiEvent>,
 ) -> anyhow::Result<()> {
     let native_options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(400.0, 250.0)),
+        viewport: egui::ViewportBuilder::default().with_inner_size([400.0, 250.0]),
         ..Default::default()
     };
     let app = SniperApp::new(app_state, ui_event_tx);
