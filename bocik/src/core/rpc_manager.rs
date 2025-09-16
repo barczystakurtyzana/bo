@@ -149,7 +149,7 @@ impl EndpointStats {
 }
 
 /// Holds all relevant information and metrics for a single RPC endpoint.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct RpcEndpoint {
     pub url: String,
     pub client: Arc<RpcClient>,
@@ -167,7 +167,7 @@ pub struct LeaderInfo {
 }
 
 /// Manages multiple RPC connections with health monitoring and intelligent routing.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct RpcManager {
     config: Arc<RwLock<Config>>,
     endpoints: Arc<Vec<RpcEndpoint>>,
@@ -233,11 +233,11 @@ impl RpcManager {
                             stats.record(latency, success);
                             if success { breaker.record_success(); } else { breaker.record_failure(); }
 
-                            // Export metrics
-                            let url_label = &endpoint.url;
-                            metrics().set_gauge(&format!("rpc_endpoint_latency_ewma_ms{{url=\"{}\"}}", url_label), stats.ewma_latency_ms as u64);
-                            metrics().set_gauge(&format!("rpc_endpoint_success_rate{{url=\"{}\"}}", url_label), (stats.success_rate() * 100.0) as u64);
-                            metrics().set_gauge(&format!("rpc_endpoint_circuit_breaker_state{{url=\"{}\"}}", url_label), if breaker.state == BreakerState::Open { 1 } else { 0 });
+                            // Export metrics (commented out - would need metrics implementation)
+                            // let url_label = &endpoint.url;
+                            // metrics().set_gauge(&format!("rpc_endpoint_latency_ewma_ms{{url=\"{}\"}}", url_label), stats.ewma_latency_ms as u64);
+                            // metrics().set_gauge(&format!("rpc_endpoint_success_rate{{url=\"{}\"}}", url_label), (stats.success_rate() * 100.0) as u64);
+                            // metrics().set_gauge(&format!("rpc_endpoint_circuit_breaker_state{{url=\"{}\"}}", url_label), if breaker.state == BreakerState::Open { 1 } else { 0 });
                         }
                     }
                     _ = shutdown_rx.changed() => {
@@ -320,8 +320,12 @@ impl RpcManager {
     /// Gets the first healthy or degraded client as a fallback.
     async fn get_healthy_client(&self) -> Result<Arc<RpcClient>> {
         let endpoints = self.endpoints.clone();
-        if let Some(ep) = endpoints.iter().find(|ep| !ep.circuit_breaker.blocking_read().is_open() && ep.stats.blocking_read().success_rate() > 0.8) {
-            return Ok(ep.client.clone());
+        for ep in endpoints.iter() {
+            let breaker = ep.circuit_breaker.read().await;
+            let stats = ep.stats.read().await;
+            if breaker.state != BreakerState::Open && stats.success_rate() > 0.8 {
+                return Ok(ep.client.clone());
+            }
         }
         Err(anyhow!("No healthy RPC endpoints available."))
     }

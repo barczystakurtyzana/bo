@@ -92,7 +92,7 @@ impl Engine {
                         }
                     }
                 }
-                Mode::Holding(_) => {
+                Mode::Holding => {
                      tokio::select! {
                         Some(candidate) = self.candidate_rx.recv() => {
                             // In a holding state, we ignore new candidates.
@@ -126,10 +126,10 @@ impl Engine {
             Ok(result) => {
                 info!("✅ Quantum Race BUY successful for {}: Signature {}", candidate.mint, result.winning_signature);
                 let mut state = self.app_state.write().await;
-                state.mode = Mode::Holding(candidate.mint);
+                state.mode = Mode::Holding;
                 // In a real scenario, we'd get the actual amount of tokens bought from the transaction.
                 // For now, we assume we bought a fixed amount.
-                let amount_bought = config.buy_sol_amount * 1_000_000; // Simplified example
+                let amount_bought = config.buy_sol_amount * 1_000_000.0; // Simplified example
                 state.held_token = Some(HeldToken {
                     mint: candidate.mint,
                     amount: amount_bought,
@@ -146,7 +146,7 @@ impl Engine {
         let (mint, amount) = {
             let state = self.app_state.read().await;
             if let Some(token) = &state.held_token {
-                (token.mint, (token.amount as f64 * percent).floor() as u64)
+                (token.mint.clone(), (token.amount as f64 * percent).floor() as u64)
             } else {
                 error!("Sell command received, but no token is held.");
                 return;
@@ -156,7 +156,15 @@ impl Engine {
         info!("Handling SELL for {}% of token {}", percent * 100.0, mint);
         let config = self.config.read().await;
 
-        let base_tx = match self.transaction_builder.build_sell_transaction(&mint, amount, &config).await {
+        let mint_pubkey = match mint.parse::<Pubkey>() {
+            Ok(pk) => pk,
+            Err(e) => {
+                error!("Failed to parse mint {} as Pubkey: {}", mint, e);
+                return;
+            }
+        };
+
+        let base_tx = match self.transaction_builder.build_sell_transaction(&mint_pubkey, amount, &config).await {
             Ok(tx) => tx,
             Err(e) => {
                 error!("Failed to build sell transaction for {}: {}", mint, e);
@@ -169,9 +177,9 @@ impl Engine {
                 info!("✅ Quantum Race SELL successful for {}: Signature {}", mint, result.winning_signature);
                 let mut state = self.app_state.write().await;
                 if let Some(token) = &mut state.held_token {
-                    token.amount -= amount;
+                    token.amount -= amount as f64;
                     // If less than 2% of the token remains, consider it fully sold and return to sniffing.
-                    if (token.amount as f64) / ((config.buy_sol_amount * 1_000_000) as f64) < 0.02 {
+                    if (token.amount as f64) / ((config.buy_sol_amount * 1_000_000.0) as f64) < 0.02 {
                         info!("Token {} fully sold. Returning to Sniffing mode.", mint);
                         state.mode = Mode::Sniffing;
                         state.held_token = None;

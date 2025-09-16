@@ -17,6 +17,9 @@
 //!   dispatch of transactions across the best nonces and RPCs to maximize the
 //!   speed and probability of success.
 
-pub mod nonce_manager;
+pub mod durable_nonce_manager;
+pub mod nonce_manager {
+    pub use super::durable_nonce_manager::*;
+}
 pub mod rpc_manager;
 pub mod quantum_race;
